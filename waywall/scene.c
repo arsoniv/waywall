@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <time.h>
 #include <wayland-util.h>
 #include FT_FREETYPE_H
 
@@ -165,6 +166,11 @@ image_render(struct scene_object *object) {
     glUniform2f(scene->shaders.data[image->shader_index].shader_u_src_size, image->width,
                 image->height);
 
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    float time_sec = (float)now.tv_sec + (float)now.tv_nsec / 1e9f;
+    glUniform1f(scene->shaders.data[image->shader_index].shader_u_time, time_sec);
+
     gl_using_buffer(GL_ARRAY_BUFFER, image->vbo) {
         gl_using_texture(GL_TEXTURE_2D, image->tex) {
             // Each image has 6 vertices in its vertex buffer.
@@ -222,6 +228,11 @@ mirror_render(struct scene_object *object) {
     glUniform2f(scene->shaders.data[mirror->shader_index].shader_u_dst_size, scene->ui->width,
                 scene->ui->height);
     glUniform2f(scene->shaders.data[mirror->shader_index].shader_u_src_size, width, height);
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    float time_sec = (float)now.tv_sec + (float)now.tv_nsec / 1e9f;
+    glUniform1f(scene->shaders.data[mirror->shader_index].shader_u_time, time_sec);
 
     gl_using_buffer(GL_ARRAY_BUFFER, mirror->vbo) {
         gl_using_texture(GL_TEXTURE_2D, capture_texture) {
@@ -756,6 +767,11 @@ text_render(struct scene_object *object) {
     glUniform2f(scene->shaders.data[text->shader_index].shader_u_src_size, FONT_ATLAS_WIDTH,
                 FONT_ATLAS_HEIGHT);
 
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    float time_sec = (float)now.tv_sec + (float)now.tv_nsec / 1e9f;
+    glUniform1f(scene->shaders.data[text->shader_index].shader_u_time, time_sec);
+
     gl_using_buffer(GL_ARRAY_BUFFER, text->vbo) {
         gl_using_texture(GL_TEXTURE_2D, font_obj->atlas_tex) {
             draw_vertex_list(&scene->shaders.data[text->shader_index], text->vtxcount);
@@ -1151,6 +1167,7 @@ shader_create(struct server_gl *gl, struct scene_shader *data, char *name, const
 
     data->shader_u_src_size = glGetUniformLocation(data->shader->program, "u_src_size");
     data->shader_u_dst_size = glGetUniformLocation(data->shader->program, "u_dst_size");
+    data->shader_u_time = glGetUniformLocation(data->shader->program, "u_time");
 
     return true;
 }
